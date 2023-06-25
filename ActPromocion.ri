@@ -15,7 +15,10 @@ procesos
       contadorP := contadorP + 1
   fin
 
-  proceso recorrerCa (ES contador:numero; ES contadorP:numero ; E valor: numero)
+  proceso recorrerCa (ES contador:numero; ES contadorP:numero ; E valor: numero; E avOr:numero)
+  variables
+    avUlt:numero
+    caUlt:numero
   comenzar
     repetir valor
       BloquearEsquina(PosAv + 1,PosCa)
@@ -23,6 +26,10 @@ procesos
       juntarPapel (contador, contadorP)
       mover
       LiberarEsquina (PosAv - 1,PosCa)
+    avUlt:= PosAv
+    caUlt:=PosCa {guardo la ultima posicion antes de retornar al area privada}
+    Pos(avOr,1) {tiene que volver a su respectiva area privada al finalizar su recorrido y alli informar}
+    LiberarEsquina(avUlt, caUlt) {liberamos la ultima esquina que quedo bloqueada del recorrido en caso de que sea necesario su uso por otro robot}
   fin
 
   proceso accionesFuente  
@@ -95,6 +102,7 @@ robots
     RecibirMensaje(iden, coordinador)
     {recibe su avenida de inicio}
     RecibirMensaje(av, coordinador)
+    av:=25 {hago esta igualacion para comprobar que los robots no se choquen incluso aunque les toque a todos la misma avenida y en consecuencia deban hacer el mismo recorrido}
     Informar('Yo_soy_el_robot_',iden)
     Informar('Me_posiciono_en_la_avenida_', av)
     BloquearEsquina(av,70)
@@ -111,9 +119,7 @@ robots
       contadorP := 0
       repetir 3 
         derecha {porque en la ultima iteracion el robot quedo mirando para abajo y necesitamos que mire para la derecha}
-      recorrerCa(contador, contadorP, pasos)
-      Pos(avOr,1) {tiene que volver a su respectiva area privada al finalizar su recorrido y alli informar}
-      LiberarEsquina(1 + pasos, av) {liberamos la ultima esquina que quedo bloqueada del recorrido en caso de que sea necesario su uso por otro robot}
+      recorrerCa(contador, contadorP, pasos,avOr)
       EnviarMensaje(iden,coordinador)
       EnviarMensaje(contadorP, coordinador)
       Informar('En_la_calle_recorrida_recolecte_la_siguiente_cantidad_de_elementos',contador)

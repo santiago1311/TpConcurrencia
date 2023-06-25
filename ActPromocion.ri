@@ -76,7 +76,7 @@ areas
   inicio0: AreaP(2,1,2,1)
   inicio1: AreaP(3,1,3,1)
   inicio2: AreaP(4,1,4,1)
-  areaTrabajo: AreaC(5,2,99,99)
+  areaTrabajo: AreaC(1,2,99,99)
   fuenteFlores: AreaPC(100,100,100,100)
 robots
   {todo el desarrollo del robot L fue realizado por Fernandez Santiago}
@@ -105,19 +105,20 @@ robots
     EnviarMensaje (exito,coordinador) {enviamos si hubo exito en el recorrido para que nos pase el mensaje de la cantidad de pasos que debemos dar}
     si (exito)
       RecibirMensaje (pasos, coordinador) {recibimos la cantidad de pasos que debemos realizar en la calle de numero de avenida en la que comenzamos anteriormente}
-      BloquearEsquina(5,av)
-      Pos(5,av)
+      BloquearEsquina(1,av)
+      Pos(1,av)
       contador := 0 {aca contaremos los elementos juntados}
       contadorP := 0
       repetir 3 
         derecha {porque en la ultima iteracion el robot quedo mirando para abajo y necesitamos que mire para la derecha}
       recorrerCa(contador, contadorP, pasos)
       Pos(avOr,1) {tiene que volver a su respectiva area privada al finalizar su recorrido y alli informar}
-      LiberarEsquina(5 + pasos, av) {liberamos la ultima esquina que quedo bloqueada del recorrido en caso de que sea necesario su uso por otro robot}
+      LiberarEsquina(1 + pasos, av) {liberamos la ultima esquina que quedo bloqueada del recorrido en caso de que sea necesario su uso por otro robot}
       EnviarMensaje(iden,coordinador)
       EnviarMensaje(contadorP, coordinador)
       Informar('En_la_calle_recorrida_recolecte_la_siguiente_cantidad_de_elementos',contador)
   fin
+  {todo el desarrollo del coordinador fue realizado por  Chavez Francisco}
   robot Coord
   variables
     iden: numero
@@ -148,11 +149,11 @@ robots
     EnviarMensaje(2, r2)
     EnviarMensaje(3, r3)
     {Se envian las avenidas de inicio}
-    Random(auxN,5,97)
+    Random(auxN,2,97)
     EnviarMensaje(auxN, r1)
-    Random(auxN,5,97)
+    Random(auxN,2,97)
     EnviarMensaje(auxN, r2)
-    Random(auxN,5,97)
+    Random(auxN,2,97)
     EnviarMensaje(auxN, r3)
     {El coordinador recibe de los robots su codigo}
     repetir 3

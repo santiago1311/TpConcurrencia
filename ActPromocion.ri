@@ -102,7 +102,6 @@ robots
     RecibirMensaje(iden, coordinador)
     {recibe su avenida de inicio}
     RecibirMensaje(av, coordinador)
-    av:=25 {hago esta igualacion para comprobar que los robots no se choquen incluso aunque les toque a todos la misma avenida y en consecuencia deban hacer el mismo recorrido}
     Informar('Yo_soy_el_robot_',iden)
     Informar('Me_posiciono_en_la_avenida_', av)
     BloquearEsquina(av,70)

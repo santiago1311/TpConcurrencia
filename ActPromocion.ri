@@ -187,7 +187,7 @@ robots
           min_papeles:= papeles_actual
         {Informa el robot que termino su trabajo}
         Informar('El_siguiente_robot_ya_completo_su_trabajo',iden)
-    {El coordinador informa al robot que menos papeles juntó y la cantidad}
+    {El coordinador informa al robot que menos papeles juntó}
     si (min_papeles <> 9999) 
       Informar('Robot_que_junto_menos_papeles_fue',min_robot)
   fin

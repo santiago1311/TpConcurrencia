@@ -1,0 +1,213 @@
+programa ActPromocion
+procesos
+  proceso juntarFlor(ES contador: numero)
+  comenzar
+    mientras HayFlorEnLaEsquina
+      tomarFlor
+      contador := contador + 1
+  fin
+
+  proceso juntarPapel(ES contador: numero; ES contadorP:numero)
+  comenzar
+    mientras HayPapelEnLaEsquina
+      tomarPapel
+      contador := contador + 1
+      contadorP := contadorP + 1
+  fin
+
+  proceso recorrerCa (ES contador:numero; ES contadorP:numero ; E valor: numero)
+  comenzar
+    repetir valor
+      BloquearEsquina(PosAv + 1,PosCa)
+      juntarFlor (contador)
+      juntarPapel (contador, contadorP)
+      mover
+      LiberarEsquina (PosAv - 1,PosCa)
+  fin
+
+  proceso accionesFuente  
+  variables
+    avPrev:numero
+    caPrev:numero {en estas variables guardo los valores de la avenida y la calle previas a ir a la fuente}
+  comenzar
+    avPrev := PosAv
+    caPrev := PosCa
+    BloquearEsquina(100,100)
+    Pos(100,100)
+    si HayFlorEnLaEsquina
+      tomarFlor
+    Pos(avPrev, caPrev) {vuelvo a la posicion original}
+    LiberarEsquina(100,100)
+  fin
+
+  proceso accionesL (ES exito: boolean)
+  comenzar
+    accionesFuente
+    si HayFlorEnLaBolsa
+      depositarFlor
+    sino 
+      exito := F
+    mover
+  fin
+
+  proceso recorrerL (ES exito: boolean; E avOr: numero)
+  variables 
+    avUlt:numero
+    caUlt:numero {estas dos variables son para almacenar la ubicacion de la ultima esquina del recorrido, esto porque una vez que el robot se vaya, esta esquina no debe quedar sin liberar}
+  comenzar
+    derecha
+    repetir 2
+      BloquearEsquina(PosAv + 1,PosCa)
+      accionesL (exito) 
+      LiberarEsquina(PosAv - 1,PosCa)
+    derecha
+    repetir 7
+      BloquearEsquina(PosAv,PosCa - 1)
+      accionesL (exito) 
+      LiberarEsquina(PosAv, PosCa + 1)
+    caUlt := PosCa
+    avUlt := PosAv  
+    Pos(avOr,1) {una vez que completo su recorrido, lo hago volver a su area privada}
+    LiberarEsquina(avUlt, caUlt)
+  fin
+
+areas
+  areaCoordinador: AreaP(1,1,1,1)
+  inicio0: AreaP(2,1,2,1)
+  inicio1: AreaP(3,1,3,1)
+  inicio2: AreaP(4,1,4,1)
+  areaTrabajo: AreaC(5,2,99,99)
+  fuenteFlores: AreaPC(100,100,100,100)
+robots
+  {todo el desarrollo del robot L fue realizado por Fernandez Santiago}
+  robot L
+  variables
+    iden: numero
+    av: numero {en esta variable guardara el valor enviado por el robot coordinador}
+    exito: boolean
+    pasos: numero
+    contador: numero {contador para todos los elementos recolectados}
+    contadorP: numero {contador para los papeles recolectados}
+    avOr : numero {en avOr guardo la avenida original del robot, no guardo la calle ya que todos arrancan en la calle 1 y esa es su area privada}
+  comenzar
+    avOr := PosAv
+    {Recibe su identificación}
+    RecibirMensaje(iden, coordinador)
+    {recibe su avenida de inicio}
+    RecibirMensaje(av, coordinador)
+    Informar('Yo_soy_el_robot_',iden)
+    Informar('Me_posiciono_en_la_avenida_', av)
+    BloquearEsquina(av,70)
+    Pos(av,70)
+    exito:=V {exito toma valor verdadero al comienzo ya que si se diera el caso que no le alcanzaron las flores, tomara valor falso}
+    recorrerL (exito, avOr)
+    EnviarMensaje (iden,coordinador) {enviamos el identificador al coordinador para que sepa cual robot completo o no el recorrido}
+    EnviarMensaje (exito,coordinador) {enviamos si hubo exito en el recorrido para que nos pase el mensaje de la cantidad de pasos que debemos dar}
+    si (exito)
+      RecibirMensaje (pasos, coordinador) {recibimos la cantidad de pasos que debemos realizar en la calle de numero de avenida en la que comenzamos anteriormente}
+      BloquearEsquina(5,av)
+      Pos(5,av)
+      contador := 0 {aca contaremos los elementos juntados}
+      contadorP := 0
+      repetir 3 
+        derecha {porque en la ultima iteracion el robot quedo mirando para abajo y necesitamos que mire para la derecha}
+      recorrerCa(contador, contadorP, pasos)
+      Pos(avOr,1) {tiene que volver a su respectiva area privada al finalizar su recorrido y alli informar}
+      LiberarEsquina(5 + pasos, av) {liberamos la ultima esquina que quedo bloqueada del recorrido en caso de que sea necesario su uso por otro robot}
+      EnviarMensaje(iden,coordinador)
+      EnviarMensaje(contadorP, coordinador)
+      Informar('En_la_calle_recorrida_recolecte_la_siguiente_cantidad_de_elementos',contador)
+  fin
+  robot Coord
+  variables
+    iden: numero
+    auxN: numero
+    auxB: boolean
+    completaron: numero
+    min_papeles: numero
+    min_robot: numero
+    papeles_actual: numero
+  comenzar
+    {1. Envia los identificadores}
+    {2. Envia las avenidas de inicio}
+    {3.1 Recibe de los robots si les alcanzo las flores de la fuente}
+    {3.2A Si les alcanzo les manda mas trabajo}
+    {3.2B Si no les alcanzo informa su Identificador y terminarón su trabajo}
+    {4.1 Recibe de los robots que si les alcanzó sus identificadores y la cantidad de papeles que juntó cada uno}
+    {4.2 Informa el identificador de cada robot}
+    {5. Informa el robot que menos papeles juntó y sus papeles}
+    {Inicializa las variables}
+    auxN:= 0
+    auxB:= F
+    completaron:= 0
+    min_papeles:= 9999
+    min_robot:= 0
+    papeles_actual:= 0
+    {Se envia los identificadores}
+    EnviarMensaje(1, r1)
+    EnviarMensaje(2, r2)
+    EnviarMensaje(3, r3)
+    {Se envian las avenidas de inicio}
+    Random(auxN,5,97)
+    EnviarMensaje(auxN, r1)
+    Random(auxN,5,97)
+    EnviarMensaje(auxN, r2)
+    Random(auxN,5,97)
+    EnviarMensaje(auxN, r3)
+    {El coordinador recibe de los robots su codigo}
+    repetir 3
+      RecibirMensaje(iden, *)
+      si (iden >= 1) & (iden <= 3)
+        {Recibe si alcanzarón las flores}
+        RecibirMensaje(auxB, *)
+        {Si alcanzó, envia al robot del que recibió el mensaje un numero aleatorio entre 50 y 70}
+        si (auxB = V)
+          Random(auxN, 50, 70)
+          {Suma al contador cuantos robots le alcanzaron las flores}
+          completaron:= completaron + 1
+          si(iden = 1)
+            EnviarMensaje(auxN, r1)
+          sino
+            si (iden = 2)
+              EnviarMensaje(auxN, r2)
+            sino
+              EnviarMensaje(auxN, r3)
+        sino
+          {Si el robot no pudo cumplir, entonces no le manda mas trabajo y informa su Identificación}
+          Informar('El_siguiente_robot_no_pudo_completarlo',iden)
+    {Completar: Iterar "completaron" veces recibiendo la identificación del robot y la cantidad de papeles que juntó}
+    {con el fin de encontrar el minimo de papeles juntados}
+    repetir completaron
+      RecibirMensaje(iden, *)
+      si (iden >= 1) & (iden <= 3)
+        RecibirMensaje(papeles_actual, *)
+        si (papeles_actual < min_papeles)
+          min_robot:= iden
+          min_papeles:= papeles_actual
+        {Informa el robot que termino su trabajo}
+        Informar('El_siguiente_robot_ya_completo_su_trabajo',iden)
+    {El coordinador informa al robot que menos papeles juntó y la cantidad}
+    si (min_papeles <> 9999) 
+      Informar('Robot_que_junto_menos_papeles_fue',min_robot)
+  fin
+variables
+  r1: L
+  r2: L
+  r3: L
+  coordinador: Coord
+comenzar
+  AsignarArea(coordinador, areaCoordinador)
+  AsignarArea(r1, inicio0)
+  AsignarArea(r2, inicio1)
+  AsignarArea(r3, inicio2)
+  AsignarArea(r1,areaTrabajo)
+  AsignarArea(r2, areaTrabajo)
+  AsignarArea(r3, areaTrabajo)
+  AsignarArea(r1, fuenteFlores)
+  AsignarArea(r2, fuenteFlores)
+  AsignarArea(r3, fuenteFlores)
+  Iniciar(r1, 2,1)
+  Iniciar(r2, 3,1)
+  Iniciar(r3, 4,1)
+  Iniciar(coordinador, 1, 1)
+fin
